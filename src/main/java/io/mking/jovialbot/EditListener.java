@@ -40,7 +40,7 @@ public class EditListener implements ChatMessageListener, ChatMessageEditListene
                 this.messageCache.put(id, messageCurrent);
                 chatMessage.getChat().send(alert);
             }
-        } catch (Exception ex) {
+        } catch (Exception e) {
             // #YOLO
         }
     }

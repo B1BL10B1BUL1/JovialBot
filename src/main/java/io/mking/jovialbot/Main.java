@@ -2,7 +2,6 @@ package io.mking.jovialbot;
 
 import com.skype.Skype;
 import com.skype.SkypeException;
-
 import java.io.IOException;
 
 public class Main {
