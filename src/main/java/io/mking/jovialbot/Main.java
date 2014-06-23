@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        EditListener listener = new EditListener();
+        HistoryWatcher listener = new HistoryWatcher();
 
         try {
             Skype.addChatMessageListener(listener);
@@ -23,5 +23,3 @@ public class Main {
         }
     }
 }
-
-
