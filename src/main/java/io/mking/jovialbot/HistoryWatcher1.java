@@ -6,11 +6,11 @@ import com.skype.*;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-public class HistoryWatcher implements ChatMessageListener, ChatMessageEditListener {
+public class HistoryWatcher1 implements ChatMessageListener, ChatMessageEditListener {
 
     private final Cache<String, String> messageCache;
 
-    public HistoryWatcher() {
+    public HistoryWatcher1() {
         this.messageCache = CacheBuilder.newBuilder()
                 .maximumSize(100)
                 .expireAfterWrite(10, TimeUnit.MINUTES)

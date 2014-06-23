@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
-        HistoryWatcher listener = new HistoryWatcher();
+        HistoryWatcher2 listener = new HistoryWatcher2();
 
         try {
             Skype.addChatMessageListener(listener);
