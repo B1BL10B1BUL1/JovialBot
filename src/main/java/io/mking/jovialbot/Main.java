@@ -7,10 +7,12 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
         HistoryWatcher2 listener = new HistoryWatcher2();
+        YouTubeTitleAnnouncer titleAnnouncer = new YouTubeTitleAnnouncer();
 
         try {
             Skype.addChatMessageListener(listener);
             Skype.addChatMessageEditListener(listener);
+            Skype.addChatMessageListener(titleAnnouncer);
         } catch (SkypeException e) {
             e.printStackTrace();
         }
