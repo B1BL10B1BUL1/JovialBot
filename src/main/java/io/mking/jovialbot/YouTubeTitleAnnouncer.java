@@ -1,42 +1,49 @@
 package io.mking.jovialbot;
 
-import com.skype.Chat;
-import com.skype.ChatMessage;
-import com.skype.ChatMessageListener;
-import com.skype.SkypeException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class YouTubeTitleAnnouncer implements ChatMessageListener {
+public class YouTubeTitleAnnouncer extends MessageListener {
+
+    private final WebClient webClient;
+
+    public YouTubeTitleAnnouncer() {
+        this.webClient = new WebClient();
+    }
+
+    public YouTubeTitleAnnouncer(WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @Override
-    public void chatMessageReceived(ChatMessage chatMessage) throws SkypeException {
-        Chat chat = chatMessage.getChat();
-        String content = chatMessage.getContent();
-        if (content.contains("youtube")) {
-            String id = getId(content);
-            if (id != null) {
-                String title = getTitle(id);
-                if (title != null) {
-                    chat.send(title);
-                }
-            }
+    public void HandleMessage(Message message) {
+
+        String content = message.getContent();
+        if (content == null || !content.contains("youtube")) {
+            return;
         }
+
+        String clipId = this.getId(content);
+        if (clipId == null) {
+            return;
+        }
+
+        String clipTitle = this.getTitle(clipId);
+        if (clipTitle == null) {
+            return;
+        }
+
+        Chat chat = message.getChat();
+        if (chat == null) {
+            return;
+        }
+
+        chat.sendMessage(clipTitle);
     }
 
-    @Override
-    public void chatMessageSent(ChatMessage chatMessage) throws SkypeException {
-        // Do nothing.
-    }
-
-    private static String getId(String url) {
+    private String getId(String url) {
         String id = null;
-        Pattern p = Pattern.compile("https?:\\/\\/www\\.youtube\\.com\\/watch.*?v=([a-zA-Z0-9\\-]+).*");
+        Pattern p = Pattern.compile("https?:\\/\\/www\\.youtube\\.com\\/watch.*?v=([a-zA-Z0-9\\-_]+).*");
         Matcher m = p.matcher(url);
         if (m.matches()) {
             id = m.group(1);
@@ -45,32 +52,15 @@ public class YouTubeTitleAnnouncer implements ChatMessageListener {
         return id;
     }
 
-    private static String getTitle(String id) {
-        String title = null;
+    private String getTitle(String id) {
         String address = String.format("https://www.youtube.com/watch?v=%s", id);
-
-        try {
-            URL url = new URL(address);
-            URLConnection connection = url.openConnection();
-            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-            Pattern p = Pattern.compile(".*?<title>(.*?)</title>.*?");
-
-            String inputLine;
-            while ((inputLine = in.readLine()) != null)
-            {
-                Matcher m = p.matcher(inputLine);
-                if (m.matches()) {
-                    title = m.group(1);
-                    break;
-                }
-            }
-            in.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        String content = this.webClient.getContent(address);
+        Pattern p = Pattern.compile("<title>(.*?)</title>", Pattern.MULTILINE);
+        Matcher m = p.matcher(content);
+        while (m.find()) {
+            return m.group(1).replace(" - YouTube", "");
         }
 
-        return title.replace(" - YouTube", "");
+        return null;
     }
 }

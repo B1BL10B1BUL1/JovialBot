@@ -2,12 +2,10 @@ package io.mking.jovialbot;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.skype.*;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-public class HistoryWatcher2 implements ChatMessageListener, ChatMessageEditListener {
+public class HistoryWatcher2 extends MessageListener {
 
     private final Cache<String, String> messageCache;
     private final Cache<String, MessageEditNotification> notificationCache;
@@ -23,13 +21,13 @@ public class HistoryWatcher2 implements ChatMessageListener, ChatMessageEditList
     }
 
     @Override
-    public void chatMessageReceived(ChatMessage chatMessage) throws SkypeException {
-        Chat chat = chatMessage.getChat();
-        String messageId = chatMessage.getId();
-        String message = chatMessage.getContent();
-        this.messageCache.put(messageId, message);
+    public void HandleMessage(Message message) {
+        Chat chat = message.getChat();
+        String messageId = message.getId();
+        String content = message.getContent();
+        this.messageCache.put(messageId, content);
 
-        if (message.equalsIgnoreCase("jovialbot show edits")) {
+        if (content.equalsIgnoreCase("jovialbot show edits")) {
             String chatId = chat.getId();
             MessageEditNotification[] notifications = notificationCache.asMap().values().stream()
                     .filter(n -> n.getChatId().equals(chatId))
@@ -37,41 +35,32 @@ public class HistoryWatcher2 implements ChatMessageListener, ChatMessageEditList
                     .toArray(MessageEditNotification[]::new);
 
             for (MessageEditNotification notification : notifications) {
-                chat.send(notification.getText());
+                chat.sendMessage(notification.getText());
             }
         }
     }
 
     @Override
-    public void chatMessageSent(ChatMessage chatMessage) throws SkypeException {
-        // Do nothing.
-    }
-
-    @Override
-    public void chatMessageEdited(ChatMessage chatMessage, Date date, User user) {
-        try {
-            Date timestamp = new Date();
-            String chatId = chatMessage.getChat().getId();
-            String messageId = chatMessage.getId();
-            String messageCurrent = chatMessage.getContent();
-            String messageOriginal = this.messageCache.getIfPresent(messageId);
-            String sender = chatMessage.getSenderDisplayName();
-            if (messageOriginal != null && !messageOriginal.equals(messageCurrent)) {
-                this.messageCache.put(messageId, messageCurrent);
-                String notificationId = messageId + "@" + timestamp.getTime();
-                String notificationText = getNotificationText(sender, messageOriginal, messageCurrent);
-                MessageEditNotification notification = new MessageEditNotification(chatId, notificationText, timestamp);
-                this.notificationCache.put(notificationId, notification);
-            }
-        } catch (SkypeException e) {
-            e.printStackTrace();
+    public void HandleEdit(Message message) {
+        Date timestamp = new Date();
+        String chatId = message.getChat().getId();
+        String messageId = message.getId();
+        String contentCurrent = message.getContent();
+        String contentOriginal = this.messageCache.getIfPresent(messageId);
+        String sender = message.getSenderName();
+        if (contentOriginal != null && !contentOriginal.equals(contentCurrent)) {
+            this.messageCache.put(messageId, contentCurrent);
+            String notificationId = messageId + "@" + timestamp.getTime();
+            String notificationText = getNotificationText(sender, contentOriginal, contentCurrent);
+            MessageEditNotification notification = new MessageEditNotification(chatId, notificationText, timestamp);
+            this.notificationCache.put(notificationId, notification);
         }
     }
 
     private static String getNotificationText(String sender, String oldMessage, String newMessage) {
         return (newMessage.length() == 0)
-                ? String.format("%s deleted message '%s'", sender, oldMessage)
-                : String.format("%s edited message '%s' to '%s'", sender, oldMessage, newMessage);
+            ? String.format("%s deleted message '%s'", sender, oldMessage)
+            : String.format("%s edited message '%s' to '%s'", sender, oldMessage, newMessage);
     }
 
     private class MessageEditNotification {
