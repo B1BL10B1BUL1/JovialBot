@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
 
         ArrayList<MessageListener> listeners = new ArrayList<MessageListener>();
-        listeners.add((new HistoryWatcher2()));
+        listeners.add(new HistoryWatcher2());
         listeners.add(new YouTubeTitleAnnouncer());
 
         for (MessageListener listener : listeners) {
